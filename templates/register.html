@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Student Registration & Biometric Enrollment{% endblock %}
+
+{% block content %}
+<div style="max-width: 960px; margin: 0 auto;">
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <h2 style="font-size: 2.2rem; margin-bottom: 0.4rem;">Student Registration & Face Enrollment</h2>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Anantha Lakshmi Institute of Technology and Sciences — Hostel Management System</p>
+  </div>
+
+  <form method="POST" action="{{ url_for('register') }}" id="reg-form">
+    <input type="hidden" name="face_samples" id="face-samples-input">
+
+    <div class="grid-2" style="margin-bottom: 2rem;">
+      <!-- Step 1: Personal Details -->
+      <div class="glass-panel" style="padding: 2rem;">
+        <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem; color: #a5b4fc; display: flex; align-items: center; gap: 0.5rem;">
+          <span>1️⃣</span> Personal & Academic Information
+        </h3>
+
+        <div class="grid-3" style="margin-bottom: 1rem;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">First Name *</label>
+            <input type="text" name="fname" class="form-control" placeholder="Apurva" required>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Middle Name</label>
+            <input type="text" name="mname" class="form-control" placeholder="S">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Last Name *</label>
+            <input type="text" name="lname" class="form-control" placeholder="Patil" required>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 1rem;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Gender</label>
+            <select name="gender" class="form-select">
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Date of Birth</label>
+            <input type="date" name="dob" class="form-control" value="2004-05-14">
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 1rem;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">PRN (Student ID) *</label>
+            <input type="text" name="prn" class="form-control" placeholder="2026WCECS002" required>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Branch *</label>
+            <select name="branch" class="form-select">
+              <option value="Computer Science and Engineering">Computer Science & Engg</option>
+              <option value="Information Technology">Information Technology</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Electrical">Electrical</option>
+              <option value="Mechanical">Mechanical</option>
+              <option value="Civil">Civil</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Year</label>
+            <select name="year" class="form-select">
+              <option value="First Year">First Year</option>
+              <option value="Second Year">Second Year</option>
+              <option value="Third Year" selected>Third Year</option>
+              <option value="Final Year">Final Year</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Hostel Name</label>
+            <input type="text" name="hostelname" class="form-control" placeholder="D1" value="D1">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Room No.</label>
+            <input type="text" name="room" class="form-control" placeholder="105" value="105">
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Biometric Face Capture -->
+      <div class="glass-panel" style="padding: 2rem; display: flex; flex-direction: column;">
+        <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem; color: #38bdf8; display: flex; align-items: center; gap: 0.5rem;">
+          <span>2️⃣</span> Biometric Face Enrollment
+        </h3>
+
+        <div class="camera-box" style="margin-bottom: 1rem; flex: 1; min-height: 240px; display: flex; align-items: center; justify-content: center;">
+          <video id="enroll-video" autoplay playsinline muted></video>
+          <canvas id="enroll-overlay" class="overlay"></canvas>
+          <div class="hud-corner hud-top-left"></div>
+          <div class="hud-corner hud-top-right"></div>
+          <div class="hud-corner hud-bottom-left"></div>
+          <div class="hud-corner hud-bottom-right"></div>
+          <div class="scan-laser"></div>
+        </div>
+
+        <!-- Camera Control & Progress -->
+        <button type="button" id="start-cam-btn" class="btn btn-cyan" onclick="initEnrollmentCamera()" style="width: 100%; margin-bottom: 0.8rem;">
+          📸 Start Camera & Auto-Capture 10 Face Samples
+        </button>
+
+        <div id="capture-progress-area" style="display: none; margin-bottom: 0.8rem;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.35rem;">
+            <span id="enroll-progress-text">Capturing face samples...</span>
+            <span id="enroll-complete-badge" class="badge badge-approved" style="display: none;">Biometrics Ready</span>
+          </div>
+          <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: var(--radius-full); overflow: hidden;">
+            <div id="enroll-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-emerald)); transition: width 0.3s ease;"></div>
+          </div>
+        </div>
+
+        <p style="font-size: 0.78rem; color: var(--text-dim); text-align: center;">
+          Look directly at the webcam in a well-lit area. 10 rapid training samples will be extracted automatically.
+        </p>
+      </div>
+    </div>
+
+    <!-- Step 3: Contact & Parent Information -->
+    <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+      <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem; color: #34d399; display: flex; align-items: center; gap: 0.5rem;">
+        <span>3️⃣</span> Contact & Parent/Guardian Details (for SMS & Email Alerts)
+      </h3>
+
+      <div class="grid-3" style="margin-bottom: 1rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Student Contact No. *</label>
+          <input type="text" name="contact" class="form-control" placeholder="9876543210" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Student Email *</label>
+          <input type="email" name="email" class="form-control" placeholder="student@wce.edu" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Account Password *</label>
+          <input type="password" name="password" class="form-control" placeholder="Create a strong password" required>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Parent/Guardian Name</label>
+          <input type="text" name="parent_name" class="form-control" placeholder="Mr./Mrs. Parent Name">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Parent Mobile No. (for SMS) *</label>
+          <input type="text" name="parent_contact" class="form-control" placeholder="9763978679" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Parent Email (for Reports) *</label>
+          <input type="email" name="parent_email" class="form-control" placeholder="parent@gmail.com" required>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 3rem;">
+      <button type="submit" class="btn btn-primary" style="font-size: 1.1rem; padding: 0.85rem 3rem;">
+        🚀 Complete Registration & Train AI Model
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

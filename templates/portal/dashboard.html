@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Warden & Admin Portal Dashboard{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h2 style="font-size: 2.2rem; margin-bottom: 0.2rem;">🏛️ Warden & Admin Command Portal</h2>
+    <p style="color: var(--text-muted);">Real-time monitoring of campus movements, leaves, and biometric security</p>
+  </div>
+
+  <div style="display: flex; gap: 0.75rem;">
+    <a href="{{ url_for('portal_verify_leave') }}" class="btn btn-cyan">
+      📸 Open Gate Scanner
+    </a>
+    <a href="{{ url_for('portal_leave_requests') }}" class="btn btn-primary">
+      📋 Review Leaves ({{ stats.pending_leaves }})
+    </a>
+  </div>
+</div>
+
+<!-- Key Stat Cards -->
+<div class="grid-4" style="margin-bottom: 2.5rem;">
+  <div class="stat-card">
+    <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">👥</div>
+    <div>
+      <div class="stat-val">{{ stats.total_students }}</div>
+      <div class="stat-lbl">Registered Students</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">⏳</div>
+    <div>
+      <div class="stat-val">{{ stats.pending_leaves }}</div>
+      <div class="stat-lbl">Pending Applications</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">🚪</div>
+    <div>
+      <div class="stat-val">{{ stats.today_movements }}</div>
+      <div class="stat-lbl">Today's Gate Movements</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background: rgba(6, 182, 212, 0.15); color: #22d3ee;">🛡️</div>
+    <div>
+      <div class="stat-val">{{ stats.enrolled_faces }}</div>
+      <div class="stat-lbl">Biometrics Trained</div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Navigation Bar for Portal Sub-Modules -->
+<div class="glass-panel" style="padding: 1rem 1.5rem; margin-bottom: 2.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+  <a href="{{ url_for('portal_leave_requests') }}" class="btn btn-outline" style="font-size: 0.9rem;">
+    📋 Check Leave Forms
+  </a>
+  <a href="{{ url_for('portal_verify_leave') }}" class="btn btn-outline" style="font-size: 0.9rem;">
+    🎯 Gate Biometric Scanner
+  </a>
+  <a href="{{ url_for('portal_search_records') }}" class="btn btn-outline" style="font-size: 0.9rem;">
+    🔍 Search In-Out Logs
+  </a>
+  <a href="{{ url_for('portal_manage_users') }}" class="btn btn-outline" style="font-size: 0.9rem;">
+    👤 Register Admin / Warden
+  </a>
+</div>
+
+<div class="grid-2">
+  <!-- Recent Pending Leave Applications -->
+  <div class="glass-panel" style="padding: 1.75rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.2rem; color: #fff;">⏳ Pending Leave Requests</h3>
+      <a href="{{ url_for('portal_leave_requests') }}" style="font-size: 0.85rem; color: var(--accent-cyan); text-decoration: none;">View All →</a>
+    </div>
+
+    {% if pending_leaves_list %}
+      <div class="table-responsive">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Dates</th>
+              <th>Type</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for l in pending_leaves_list %}
+              <tr>
+                <td>
+                  <strong>{{ l.first_name }} {{ l.last_name }}</strong><br>
+                  <span style="font-size: 0.78rem; color: var(--text-muted);">PRN: {{ l.prn }}</span>
+                </td>
+                <td>
+                  <span style="font-size: 0.85rem;">{{ l.leaving_date }} to {{ l.return_date }}</span><br>
+                  <span style="font-size: 0.78rem; color: var(--text-dim);">({{ l.total_days }} days)</span>
+                </td>
+                <td><span class="badge badge-pending">{{ l.leave_type }}</span></td>
+                <td>
+                  <button class="btn btn-success" style="padding: 0.35rem 0.7rem; font-size: 0.78rem;" onclick="updateLeaveStatus({{ l.id }}, 'Approved')">Approve</button>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+        ✨ All caught up! No pending leave applications to review.
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Recent Gate Movements -->
+  <div class="glass-panel" style="padding: 1.75rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.2rem; color: #fff;">🚪 Recent Gate Movements</h3>
+      <a href="{{ url_for('portal_search_records') }}" style="font-size: 0.85rem; color: var(--accent-cyan); text-decoration: none;">Full Logs →</a>
+    </div>
+
+    {% if recent_movements %}
+      <div class="table-responsive">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Action</th>
+              <th>Time</th>
+              <th>Biometric</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in recent_movements %}
+              <tr>
+                <td>
+                  <strong>{{ m.first_name }} {{ m.last_name }}</strong><br>
+                  <span style="font-size: 0.78rem; color: var(--text-muted);">{{ m.prn }}</span>
+                </td>
+                <td>
+                  <span class="badge {% if m.movement_type == 'OUT' %}badge-pending{% else %}badge-approved{% endif %}">
+                    {{ m.movement_type }}
+                  </span>
+                </td>
+                <td style="font-size: 0.84rem; color: var(--text-muted);">{{ m.timestamp }}</td>
+                <td>
+                  <span style="font-size: 0.82rem; color: var(--accent-cyan);">{{ m.confidence }}%</span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+        No gate movements recorded yet today.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}My Student Dashboard - HostelPass AI{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+  <!-- Welcome Header -->
+  <div style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.3rem;">
+        <h2 style="font-size: 2.2rem;">Welcome, {{ student.first_name }} {{ student.last_name }}</h2>
+        <span class="badge badge-approved" style="font-size: 0.85rem;">🎓 Student</span>
+      </div>
+      <p style="color: var(--text-muted);">PRN: <strong style="color: var(--accent-cyan);">{{ student.prn }}</strong> | Hostel: <strong>{{ student.hostel_name }} - Room {{ student.room_number }}</strong></p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{{ url_for('leave_apply') }}" class="btn btn-cyan">
+        📝 Apply for New Leave
+      </a>
+      <a href="{{ url_for('logout') }}" class="btn btn-outline">
+        Sign Out
+      </a>
+    </div>
+  </div>
+
+  <!-- Profile & Biometric Status Grid -->
+  <div class="grid-3" style="margin-bottom: 2.5rem;">
+    <!-- Profile Info Card -->
+    <div class="glass-panel" style="padding: 1.5rem;">
+      <h3 style="font-size: 1.15rem; color: #a5b4fc; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span>👤</span> Academic Profile
+      </h3>
+      <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.9rem;">
+        <div><span style="color: var(--text-muted);">Branch:</span> <strong>{{ student.branch }}</strong></div>
+        <div><span style="color: var(--text-muted);">Year:</span> <strong>{{ student.year }}</strong></div>
+        <div><span style="color: var(--text-muted);">Contact:</span> <strong>{{ student.contact }}</strong></div>
+        <div><span style="color: var(--text-muted);">Hostel & Room:</span> <strong>{{ student.hostel_name }} / {{ student.room_number }}</strong></div>
+      </div>
+    </div>
+
+    <!-- Parent Alerts Card -->
+    <div class="glass-panel" style="padding: 1.5rem;">
+      <h3 style="font-size: 1.15rem; color: #34d399; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span>👨‍👩‍👧</span> Parent Notification Setup
+      </h3>
+      <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.9rem;">
+        <div><span style="color: var(--text-muted);">Parent Name:</span> <strong>{{ student.parent_name or 'Parent/Guardian' }}</strong></div>
+        <div><span style="color: var(--text-muted);">SMS Mobile:</span> <strong>{{ student.parent_contact }}</strong></div>
+        <div><span style="color: var(--text-muted);">Parent Email:</span> <strong>{{ student.parent_email }}</strong></div>
+        <span style="font-size: 0.78rem; color: var(--text-dim); margin-top: 0.3rem;">
+          ⚡ All approved leaves and gate movements trigger instant SMS/Email alerts to parents.
+        </span>
+      </div>
+    </div>
+
+    <!-- Biometric Status Card -->
+    <div class="glass-panel" style="padding: 1.5rem;">
+      <h3 style="font-size: 1.15rem; color: #38bdf8; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span>📸</span> AI Face Biometrics
+      </h3>
+      <div>
+        {% if student.face_enrolled %}
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <span class="badge badge-approved"><span class="badge-dot"></span> Face ID Enrolled</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">({{ student.samples_count }} samples)</span>
+          </div>
+          <p style="font-size: 0.84rem; color: var(--text-muted); line-height: 1.4;">
+            Your biometric profile is active. You can verify through the gate scanner smoothly.
+          </p>
+        {% else %}
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <span class="badge badge-pending"><span class="badge-dot"></span> Enrollment Pending</span>
+          </div>
+          <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+            No face samples enrolled. Please register your biometric samples for gate scanning.
+          </p>
+        {% endif %}
+
+        <button type="button" class="btn btn-outline" style="width: 100%; font-size: 0.84rem; padding: 0.5rem; margin-top: 0.8rem;" onclick="openReEnrollModal()">
+          🔄 Update Face Biometrics
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Re-Enroll Biometric Modal (Hidden by default) -->
+  <div id="re-enroll-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div class="glass-panel" style="max-width: 520px; width: 100%; padding: 2rem; background: #0f172a; border: 1px solid var(--border-glass);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.25rem; color: #fff;">📸 Capture Face Biometrics</h3>
+        <button type="button" onclick="closeReEnrollModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">✕</button>
+      </div>
+
+      <div class="camera-box" style="margin-bottom: 1.25rem; height: 260px;">
+        <video id="modal-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+        <canvas id="modal-overlay" class="overlay"></canvas>
+        <div class="hud-corner hud-top-left"></div>
+        <div class="hud-corner hud-top-right"></div>
+        <div class="hud-corner hud-bottom-left"></div>
+        <div class="hud-corner hud-bottom-right"></div>
+        <div class="scan-laser"></div>
+      </div>
+
+      <div id="modal-progress-bar-area" style="display: none; margin-bottom: 1rem;">
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem;" id="modal-progress-text">Capturing 10 face frames...</div>
+        <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: var(--radius-full); overflow: hidden;">
+          <div id="modal-progress-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-emerald)); transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+
+      <button type="button" id="modal-start-btn" class="btn btn-cyan" style="width: 100%;" onclick="startModalCapture({{ student.id }})">
+        ⚡ Start Camera & Auto-Capture 10 Samples
+      </button>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- My Leave Applications -->
+    <div class="glass-panel" style="padding: 1.75rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.25rem; color: #fff;">📝 My Leave Applications</h3>
+        <a href="{{ url_for('leave_apply') }}" class="btn btn-cyan" style="padding: 0.4rem 0.8rem; font-size: 0.82rem;">+ New Leave</a>
+      </div>
+
+      {% if leaves %}
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Dates & Days</th>
+                <th>Type</th>
+                <th>Reason</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for l in leaves %}
+                <tr>
+                  <td>
+                    <strong>{{ l.leaving_date }}</strong> to <strong>{{ l.return_date }}</strong><br>
+                    <span style="font-size: 0.78rem; color: var(--text-muted);">{{ l.total_days }} day(s) ({{ l.period }})</span>
+                  </td>
+                  <td><span class="badge badge-pending">{{ l.leave_type }}</span></td>
+                  <td style="max-width: 160px; font-size: 0.85rem;">{{ l.reason }}</td>
+                  <td>
+                    {% if l.status == 'Approved' %}
+                      <span class="badge badge-approved"><span class="badge-dot"></span> Approved</span>
+                    {% elif l.status == 'Rejected' %}
+                      <span class="badge badge-rejected"><span class="badge-dot"></span> Rejected</span>
+                    {% else %}
+                      <span class="badge badge-pending"><span class="badge-dot"></span> Pending</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+          No leave applications submitted yet. Click <strong>'+ New Leave'</strong> to create one.
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- My Gate Movements -->
+    <div class="glass-panel" style="padding: 1.75rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.25rem; color: #fff;">🚪 My Campus In / Out History</h3>
+        <span style="font-size: 0.82rem; color: var(--text-muted);">Biometric Gate Logs</span>
+      </div>
+
+      {% if movements %}
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Movement</th>
+                <th>Status</th>
+                <th>Biometric Match</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for m in movements %}
+                <tr>
+                  <td>
+                    <span class="badge {% if m.movement_type == 'OUT' %}badge-pending{% else %}badge-approved{% endif %}">
+                      {{ m.movement_type }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if m.status == 'Authorized' %}
+                      <span class="badge badge-approved">Authorized</span>
+                    {% else %}
+                      <span class="badge badge-rejected">{{ m.status }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <strong style="color: var(--accent-cyan);">{{ m.confidence }}%</strong>
+                  </td>
+                  <td style="font-size: 0.82rem; color: var(--text-muted);">{{ m.timestamp }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+          No gate movement entries recorded yet.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  let modalCam = null;
+
+  function openReEnrollModal() {
+    const modal = document.getElementById('re-enroll-modal');
+    modal.style.display = 'flex';
+  }
+
+  function closeReEnrollModal() {
+    if (modalCam) {
+      modalCam.stop();
+      modalCam = null;
+    }
+    const modal = document.getElementById('re-enroll-modal');
+    modal.style.display = 'none';
+  }
+
+  async function startModalCapture(studentId) {
+    modalCam = new BiometricCamera('modal-video', 'modal-overlay');
+    const ok = await modalCam.start();
+    if (!ok) return;
+
+    document.getElementById('modal-start-btn').style.display = 'none';
+    document.getElementById('modal-progress-bar-area').style.display = 'block';
+
+    const samples = [];
+    const needed = 10;
+    const progressFill = document.getElementById('modal-progress-fill');
+    const progressText = document.getElementById('modal-progress-text');
+
+    const loop = setInterval(async () => {
+      if (samples.length >= needed) {
+        clearInterval(loop);
+        progressText.innerText = "Processing & Training AI Face Model...";
+
+        try {
+          const resp = await fetch('/api/face/enroll', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ student_id: studentId, samples: samples })
+          });
+          const res = await resp.json();
+          if (res.status === 'success') {
+            showToast("Biometrics updated & model trained successfully!", "success");
+            setTimeout(() => location.reload(), 1500);
+          } else {
+            showToast(res.message, "error");
+          }
+        } catch (e) {
+          showToast("Enrollment error: " + e.message, "error");
+        } finally {
+          modalCam.stop();
+        }
+        return;
+      }
+
+      const frame = modalCam.captureFrameAsBase64();
+      if (frame) {
+        samples.push(frame);
+        const pct = Math.round((samples.length / needed) * 100);
+        progressFill.style.width = `${pct}%`;
+        progressText.innerText = `Captured sample ${samples.length}/${needed} (${pct}%)`;
+      }
+    }, 350);
+  }
+</script>
+{% endblock %}

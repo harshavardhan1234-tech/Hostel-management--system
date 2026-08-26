@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Search Student In-Out Gate Records{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+  <div style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h2 style="font-size: 2.2rem; margin-bottom: 0.2rem;">🔍 Student In-Out Gate Movement Logs</h2>
+      <p style="color: var(--text-muted);">Real-time audit log of student gate exits and entries verified by face recognition</p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <button class="btn btn-primary" onclick="exportTableToCSV('data-table', 'gate_movement_logs.csv')">
+        📥 Export All Records (CSV)
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Panel -->
+  <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
+    <form method="GET" action="{{ url_for('portal_search_records') }}" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 1rem; align-items: end;">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Search Keyword</label>
+        <input type="text" id="search-input" name="q" class="form-control" placeholder="Search by student name, PRN, branch, hostel..." value="{{ search_query }}">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Movement Type</label>
+        <select name="movement" class="form-select">
+          <option value="">All (IN & OUT)</option>
+          <option value="OUT" {% if selected_movement == 'OUT' %}selected{% endif %}>Campus Exit (OUT)</option>
+          <option value="IN" {% if selected_movement == 'IN' %}selected{% endif %}>Campus Entry (IN)</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Date</label>
+        <input type="date" name="date" class="form-control" value="{{ selected_date }}">
+      </div>
+
+      <button type="submit" class="btn btn-cyan" style="padding: 0.75rem 1.4rem;">
+        Filter
+      </button>
+    </form>
+  </div>
+
+  <!-- Movement Records Table -->
+  <div class="glass-panel" style="padding: 1.5rem;">
+    <div class="table-responsive">
+      <table class="custom-table" id="data-table">
+        <thead>
+          <tr>
+            <th>Log ID</th>
+            <th>Student Name</th>
+            <th>PRN</th>
+            <th>Hostel & Room</th>
+            <th>Movement</th>
+            <th>Biometric Confidence</th>
+            <th>Authorization Status</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if logs %}
+            {% for log in logs %}
+              <tr>
+                <td><strong style="color: var(--accent-cyan);">#LOG-{{ log.id }}</strong></td>
+                <td>
+                  <strong>{{ log.first_name }} {{ log.last_name }}</strong><br>
+                  <span style="font-size: 0.78rem; color: var(--text-muted);">{{ log.branch }}</span>
+                </td>
+                <td><span style="color: #a5b4fc; font-weight: 600;">{{ log.prn }}</span></td>
+                <td>{{ log.hostel_name }} - {{ log.room_number }}</td>
+                <td>
+                  <span class="badge {% if log.movement_type == 'OUT' %}badge-pending{% else %}badge-approved{% endif %}">
+                    {{ log.movement_type }}
+                  </span>
+                </td>
+                <td>
+                  <strong style="color: var(--accent-cyan);">{{ log.confidence }}%</strong>
+                </td>
+                <td>
+                  {% if log.status == 'Authorized' %}
+                    <span class="badge badge-approved"><span class="badge-dot"></span> Authorized</span>
+                  {% else %}
+                    <span class="badge badge-rejected"><span class="badge-dot"></span> {{ log.status }}</span>
+                  {% endif %}
+                </td>
+                <td style="font-size: 0.88rem; color: var(--text-muted);">
+                  {{ log.timestamp }}
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                No matching movement logs found for the selected criteria.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

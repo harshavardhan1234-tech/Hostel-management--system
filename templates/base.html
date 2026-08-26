@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Hostel Biometric Portal{% endblock %} - Anantha Lakshmi Institute of Technology and Sciences</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar-custom">
+    <div class="nav-container">
+      <a href="{{ url_for('index') }}" class="nav-brand">
+        <div class="nav-brand-icon">🛡️</div>
+        <div class="nav-brand-text">
+          <h1>HostelPass AI</h1>
+          <span>Anantha Lakshmi Institute of Technology & Sciences</span>
+        </div>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">🏠 Home</a></li>
+
+        {% if session.get('user_id') %}
+          {% if session.get('role') == 'student' %}
+            <!-- Student Specific Navigation Links -->
+            <li><a href="{{ url_for('student_dashboard') }}" class="nav-link {% if request.endpoint == 'student_dashboard' %}active{% endif %}">📊 My Dashboard</a></li>
+            <li><a href="{{ url_for('leave_apply') }}" class="nav-link {% if request.endpoint == 'leave_apply' %}active{% endif %}">📝 Apply Leave</a></li>
+          {% elif session.get('role') in ['warden', 'admin'] %}
+            <!-- Warden / Admin Specific Navigation Links -->
+            <li><a href="{{ url_for('portal_dashboard') }}" class="nav-link {% if request.endpoint == 'portal_dashboard' %}active{% endif %}">🏛️ Dashboard</a></li>
+            <li><a href="{{ url_for('portal_verify_leave') }}" class="nav-link {% if request.endpoint == 'portal_verify_leave' %}active{% endif %}">📸 Gate Scanner</a></li>
+            <li><a href="{{ url_for('portal_leave_requests') }}" class="nav-link {% if request.endpoint == 'portal_leave_requests' %}active{% endif %}">📋 Review Leaves</a></li>
+            <li><a href="{{ url_for('portal_search_records') }}" class="nav-link {% if request.endpoint == 'portal_search_records' %}active{% endif %}">🔍 Movement Logs</a></li>
+            <li><a href="{{ url_for('portal_manage_users') }}" class="nav-link {% if request.endpoint == 'portal_manage_users' %}active{% endif %}">👥 Staff Users</a></li>
+          {% endif %}
+
+          <li>
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-left: 0.5rem;">
+              <span class="badge {% if session.get('role') == 'student' %}badge-approved{% else %}badge-pending{% endif %}" style="text-transform: none;">
+                👤 {{ session.get('username') }} ({{ session.get('role')|capitalize }})
+              </span>
+              <a href="{{ url_for('logout') }}" class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Logout</a>
+            </div>
+          </li>
+        {% else %}
+          <!-- Unauthenticated Navigation Links -->
+          <li><a href="{{ url_for('register') }}" class="nav-link {% if request.endpoint == 'register' %}active{% endif %}">📸 Student Enrollment</a></li>
+          <li><a href="{{ url_for('login_student') }}" class="btn btn-cyan" style="padding: 0.45rem 1rem; font-size: 0.88rem;">🎓 Student Login</a></li>
+          <li><a href="{{ url_for('login_warden') }}" class="btn btn-primary" style="padding: 0.45rem 1rem; font-size: 0.88rem;">🛡️ Warden Login</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div style="max-width: 1280px; margin: 1.5rem auto 0; padding: 0 1.5rem;">
+        {% for category, msg in messages %}
+          <div class="glass-panel" style="padding: 1rem 1.5rem; border-left: 4px solid {% if category == 'error' %}var(--accent-rose){% elif category == 'warning' %}var(--accent-amber){% else %}var(--accent-emerald){% endif %}; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+            <span>{{ msg }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Main Content Body -->
+  <main class="main-wrapper">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div style="max-width: 1280px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <p>© 2026 Anantha Lakshmi Institute of Technology and Sciences — Hostel Leave & Biometric Attendance System</p>
+      <p style="color: var(--text-dim);">Separate Student & Warden Role-Based Security</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

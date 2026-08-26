@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Apply for Hostel Leave Permission{% endblock %}
+
+{% block content %}
+<div style="max-width: 820px; margin: 0 auto;">
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <h2 style="font-size: 2.2rem; margin-bottom: 0.4rem;">Hostel Leave Permission Application</h2>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Submit leave request for Warden / Dean Academic Affairs approval</p>
+  </div>
+
+  <!-- Gate Curfew Notice -->
+  <div class="glass-panel" style="padding: 1.2rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem; border-left: 4px solid var(--accent-amber);">
+    <div style="font-size: 1.6rem;">⏰</div>
+    <div>
+      <h4 style="font-size: 0.98rem; color: #fbbf24; margin-bottom: 0.2rem;">Gate Curfew & Leave Timing Policy</h4>
+      <p style="font-size: 0.84rem; color: var(--text-muted);">
+        Standard campus leave hours are between <strong>06:00 AM and 10:00 PM</strong>. Leave requests outside permitted hours require explicit emergency approval from the Chief Warden.
+      </p>
+    </div>
+  </div>
+
+  <div class="glass-panel" style="padding: 2.5rem 2rem;">
+    <form method="POST" action="{{ url_for('leave_apply') }}">
+      
+      <!-- Student Info Selector or Locked Student Identity -->
+      {% if session.get('role') == 'student' and current_student %}
+        <div class="form-group">
+          <label class="form-label">Applicant (Your Account)</label>
+          <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-glow); padding: 0.85rem 1.2rem; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong style="color: #fff; font-size: 1.05rem;">{{ current_student.first_name }} {{ current_student.last_name }}</strong>
+              <span style="color: var(--text-muted); font-size: 0.85rem; margin-left: 0.5rem;">(PRN: {{ current_student.prn }})</span>
+            </div>
+            <span class="badge badge-approved">Hostel {{ current_student.hostel_name }} - Rm {{ current_student.room_number }}</span>
+          </div>
+          <input type="hidden" name="student_id" value="{{ current_student.id }}">
+        </div>
+      {% else %}
+        <div class="form-group">
+          <label class="form-label">Select Student (Name & PRN) *</label>
+          <select name="student_id" class="form-select" required>
+            {% for s in students %}
+              <option value="{{ s.id }}">
+                {{ s.first_name }} {{ s.last_name }} (PRN: {{ s.prn }}) - Hostel {{ s.hostel_name }}, Room {{ s.room_number }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Leave Type *</label>
+          <select name="leave_type" class="form-select" required>
+            <option value="Working Days">Working Days Leave</option>
+            <option value="Non-Working Days">Non-Working Days / Weekend</option>
+            <option value="Vacation" selected>Semester Vacation / Festival</option>
+            <option value="Medical">Medical Emergency</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Period of Leave *</label>
+          <select name="period" class="form-select" required>
+            <option value="Full day" selected>Full day</option>
+            <option value="Forenoon">Forenoon (FN)</option>
+            <option value="Afternoon">Afternoon (AN)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="form-group">
+          <label class="form-label">Leaving Date *</label>
+          <input type="date" id="leave_dt" name="leave_dt" class="form-control" required value="{{ today_str }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Return Date *</label>
+          <input type="date" id="return_dt" name="return_dt" class="form-control" required value="{{ today_str }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Total Number of Days</label>
+          <input type="number" id="total_days" name="total_days" class="form-control" value="1" readonly style="background: rgba(0,0,0,0.3); color: var(--accent-cyan); font-weight: bold;">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Permission Authority *</label>
+        <select name="permission_from" class="form-select" required>
+          <option value="Warden" selected>Hostel Warden</option>
+          <option value="Dean academic affairs followed by warden">Dean Academic Affairs followed by Warden</option>
+          <option value="Rector">Chief Rector</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Reason for Leave *</label>
+        <textarea name="reason" class="form-control" rows="3" placeholder="Provide clear reason for taking hostel leave..." required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Address During Leave (Destination & Emergency Contact) *</label>
+        <textarea name="address_during_leave" class="form-control" rows="2" placeholder="Full address of destination with pin code..." required></textarea>
+      </div>
+
+      <div style="margin-top: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <span style="font-size: 0.85rem; color: var(--text-dim);">
+          📩 An automated notification will be dispatched to registered parent contacts upon approval.
+        </span>
+        <button type="submit" class="btn btn-primary" style="padding: 0.8rem 2.5rem; font-size: 1rem;">
+          📤 Submit Leave Application
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

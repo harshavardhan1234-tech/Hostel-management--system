@@ -1,0 +1,7 @@
+flask>=3.0
+opencv-contrib-python==4.10.0.84
+numpy>=1.21
+Pillow>=9.0
+pandas>=1.5
+yagmail>=0.15
+werkzeug>=3.0

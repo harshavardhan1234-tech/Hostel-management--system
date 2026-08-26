@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Check Student Leave Application Forms{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+  <div style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h2 style="font-size: 2.2rem; margin-bottom: 0.2rem;">📋 Student Leave Application Forms</h2>
+      <p style="color: var(--text-muted);">Review, verify, and authorize or reject student hostel leave applications</p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <input type="text" id="search-input" class="form-control" placeholder="🔍 Search by student name, PRN, branch..." style="width: 280px; padding: 0.5rem 1rem;">
+      <button class="btn btn-outline" onclick="exportTableToCSV('data-table', 'leave_requests.csv')" style="padding: 0.5rem 1rem;">
+        📥 Export CSV
+      </button>
+    </div>
+  </div>
+
+  <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
+    <div class="table-responsive">
+      <table class="custom-table" id="data-table">
+        <thead>
+          <tr>
+            <th>Application ID</th>
+            <th>Student Info</th>
+            <th>Leave Type & Days</th>
+            <th>Duration</th>
+            <th>Reason & Address</th>
+            <th>Permission Authority</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in leaves %}
+            <tr>
+              <td><strong style="color: var(--accent-cyan);">#LV-{{ l.id }}</strong></td>
+              <td>
+                <strong>{{ l.first_name }} {{ l.last_name }}</strong><br>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">PRN: {{ l.prn }}</span><br>
+                <span style="font-size: 0.75rem; color: var(--text-dim);">Hostel {{ l.hostel_name }} - Rm {{ l.room_number }}</span>
+              </td>
+              <td>
+                <span class="badge {% if l.leave_type == 'Vacation' %}badge-approved{% elif l.leave_type == 'Medical' %}badge-rejected{% else %}badge-pending{% endif %}">
+                  {{ l.leave_type }}
+                </span><br>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">{{ l.total_days }} day(s) ({{ l.period }})</span>
+              </td>
+              <td>
+                <span style="font-size: 0.85rem;">{{ l.leaving_date }}</span><br>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">to {{ l.return_date }}</span>
+              </td>
+              <td style="max-width: 240px;">
+                <p style="font-size: 0.86rem; color: var(--text-main); margin-bottom: 0.2rem;">{{ l.reason }}</p>
+                <span style="font-size: 0.75rem; color: var(--text-dim);">📍 {{ l.address_during_leave }}</span>
+              </td>
+              <td>
+                <span style="font-size: 0.82rem; color: #a5b4fc;">{{ l.permission_from }}</span>
+              </td>
+              <td>
+                {% if l.status == 'Approved' %}
+                  <span class="badge badge-approved"><span class="badge-dot"></span> Approved</span>
+                {% elif l.status == 'Rejected' %}
+                  <span class="badge badge-rejected"><span class="badge-dot"></span> Rejected</span>
+                {% else %}
+                  <span class="badge badge-pending"><span class="badge-dot"></span> Pending</span>
+                {% endif %}
+              </td>
+              <td>
+                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                  {% if l.status != 'Approved' %}
+                    <button class="btn btn-success" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" onclick="updateLeaveStatus({{ l.id }}, 'Approved')">
+                      Approve
+                    </button>
+                  {% endif %}
+                  {% if l.status != 'Rejected' %}
+                    <button class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" onclick="updateLeaveStatus({{ l.id }}, 'Rejected')">
+                      Reject
+                    </button>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

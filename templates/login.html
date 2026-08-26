@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Hostel Management System{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 2rem auto;">
+  <div class="glass-panel" style="padding: 2.5rem 2rem;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div style="width: 56px; height: 56px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--primary), var(--accent-cyan)); display: inline-flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 1rem; box-shadow: 0 0 25px var(--primary-glow);">
+        🔐
+      </div>
+      <h2 style="font-size: 1.8rem; margin-bottom: 0.3rem;">Welcome Back</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Sign in to access student or warden privileges</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('login') }}">
+      <div class="form-group">
+        <label class="form-label" for="username">Username or PRN</label>
+        <input type="text" id="username" name="username" class="form-control" placeholder="e.g. admin, warden, or PRN" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem; padding: 0.8rem;">
+        Sign In to Portal
+      </button>
+    </form>
+
+    <!-- Quick Demo Logins for Fast Testing -->
+    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-glass);">
+      <p style="font-size: 0.82rem; color: var(--text-muted); text-align: center; margin-bottom: 0.8rem;">⚡ Quick Demo Access:</p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
+        <button type="button" class="btn btn-outline" style="font-size: 0.82rem; padding: 0.5rem;" onclick="fillDemo('warden', 'warden123')">
+          👤 Warden (Demo)
+        </button>
+        <button type="button" class="btn btn-outline" style="font-size: 0.82rem; padding: 0.5rem;" onclick="fillDemo('admin', 'admin123')">
+          🛡️ Admin (Demo)
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function fillDemo(user, pass) {
+    document.getElementById('username').value = user;
+    document.getElementById('password').value = pass;
+  }
+</script>
+{% endblock %}

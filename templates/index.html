@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Hostel Leave & Biometric Gate Management{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="hero-tag">
+    <span>✨ Next-Gen Hostel Security & Biometrics</span>
+  </div>
+  <h1 class="hero-title">Hostel Leave Permission &<br>Face Recognition System</h1>
+  <p class="hero-subtitle">
+    Automate hostel leave permissions with real-time AI face recognition, live gate verification, instant parent SMS notifications, and zero proxy entries.
+  </p>
+
+  <div class="hero-actions">
+    <a href="{{ url_for('leave_apply') }}" class="btn btn-cyan" style="font-size: 1.05rem; padding: 0.85rem 1.8rem;">
+      📝 Apply for Hostel Leave
+    </a>
+    <a href="{{ url_for('portal_verify_leave') }}" class="btn btn-primary" style="font-size: 1.05rem; padding: 0.85rem 1.8rem;">
+      📸 Live Gate Scanner
+    </a>
+    <a href="{{ url_for('register') }}" class="btn btn-outline" style="font-size: 1.05rem; padding: 0.85rem 1.8rem;">
+      👤 Student Registration
+    </a>
+  </div>
+</section>
+
+<!-- Live System Status & Hours Banner -->
+<div class="glass-panel" style="padding: 1.25rem 2rem; margin-bottom: 2.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; border-color: {% if gate_status.is_allowed %}var(--accent-emerald-glow){% else %}rgba(244, 63, 94, 0.4){% endif %};">
+  <div style="display: flex; align-items: center; gap: 1rem;">
+    <div style="width: 44px; height: 44px; border-radius: var(--radius-md); background: {% if gate_status.is_allowed %}rgba(16, 185, 129, 0.2){% else %}rgba(244, 63, 94, 0.2){% endif %}; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+      {% if gate_status.is_allowed %}🔓{% else %}🔒{% endif %}
+    </div>
+    <div>
+      <h3 style="font-size: 1.1rem; color: #fff;">{{ gate_status.message }}</h3>
+      <p style="font-size: 0.84rem; color: var(--text-muted);">Current Time: <strong style="color: var(--accent-cyan);">{{ gate_status.time_str }}</strong></p>
+    </div>
+  </div>
+
+  <div>
+    <span class="badge {% if gate_status.is_allowed %}badge-approved{% else %}badge-rejected{% endif %}" style="font-size: 0.85rem; padding: 0.5rem 1rem;">
+      <span class="badge-dot"></span> Gate Status: {% if gate_status.is_allowed %}ACTIVE / OPEN{% else %}RESTRICTED HOURS{% endif %}
+    </span>
+  </div>
+</div>
+
+<!-- Stats Grid -->
+<div class="grid-4" style="margin-bottom: 3rem;">
+  <div class="stat-card glass-panel-hover">
+    <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">👥</div>
+    <div>
+      <div class="stat-val">{{ stats.total_students }}</div>
+      <div class="stat-lbl">Enrolled Students</div>
+    </div>
+  </div>
+
+  <div class="stat-card glass-panel-hover">
+    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">⏳</div>
+    <div>
+      <div class="stat-val">{{ stats.pending_leaves }}</div>
+      <div class="stat-lbl">Pending Leave Requests</div>
+    </div>
+  </div>
+
+  <div class="stat-card glass-panel-hover">
+    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">✅</div>
+    <div>
+      <div class="stat-val">{{ stats.approved_leaves }}</div>
+      <div class="stat-lbl">Approved Leaves Today</div>
+    </div>
+  </div>
+
+  <div class="stat-card glass-panel-hover">
+    <div class="stat-icon" style="background: rgba(6, 182, 212, 0.15); color: #22d3ee;">🚪</div>
+    <div>
+      <div class="stat-val">{{ stats.today_movements }}</div>
+      <div class="stat-lbl">Today's Gate Movements</div>
+    </div>
+  </div>
+</div>
+
+<!-- All 9 Features Showcase Grid -->
+<div style="margin-bottom: 2rem;">
+  <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem; text-align: center;">Comprehensive Portal Capabilities</h2>
+  <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Every module designed for zero-proxy attendance and streamlined warden workflow.</p>
+  
+  <div class="grid-3">
+    <!-- Card 1 -->
+    <div class="glass-panel glass-panel-hover" style="padding: 1.75rem;">
+      <div style="font-size: 2rem; margin-bottom: 1rem;">🏠</div>
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.6rem;">1. Integrated Home Portal</h3>
+      <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.2rem;">
+        Unified digital landing page for students, wardens, and administrators with real-time status widgets.
+      </p>
+      <a href="{{ url_for('index') }}" class="btn btn-outline" style="width: 100%;">View Home</a>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="glass-panel glass-panel-hover" style="padding: 1.75rem;">
+      <div style="font-size: 2rem; margin-bottom: 1rem;">📸</div>
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.6rem;">2. Registration + Face Capture</h3>
+      <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.2rem;">
+        Live WebRTC camera capture with multi-sample dataset collection and auto-model training.
+      </p>
+      <a href="{{ url_for('register') }}" class="btn btn-outline" style="width: 100%;">Enroll Student</a>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="glass-panel glass-panel-hover" style="padding: 1.75rem;">
+      <div style="font-size: 2rem; margin-bottom: 1rem;">📝</div>
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.6rem;">3. Leave Application Form</h3>
+      <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.2rem;">
+        Digital e-leave submission with auto-duration math, leave types, permission routes, and reason notes.
+      </p>
+      <a href="{{ url_for('leave_apply') }}" class="btn btn-outline" style="width: 100%;">Apply Leave</a>
+    </div>
+
+    <!-- Card 4 & 5 -->
+    <div class="glass-panel glass-panel-hover" style="padding: 1.75rem;">
+      <div style="font-size: 2rem; margin-bottom: 1rem;">📋</div>
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.6rem;">4 & 5. Leave Request Manager</h3>
+      <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.2rem;">
+        Warden review portal to inspect student forms, verify details, and 1-click Approve or Reject.
+      </p>
+      <a href="{{ url_for('portal_leave_requests') }}" class="btn btn-outline" style="width: 100%;">Manage Requests</a>
+    </div>
+
+    <!-- Card 6 -->
+    <div class="glass-panel glass-panel-hover" style="padding: 1.75rem;">
+      <div style="font-size: 2rem; margin-bottom: 1rem;">🎯</div>
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.6rem;">6. Gate Face Recognition</h3>
+      <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.2rem;">
+        Live biometric camera scanning at hostel gate to verify approved leave status and prevent unauthorized exits.
+      </p>
+      <a href="{{ url_for('portal_verify_leave') }}" class="btn btn-outline" style="width: 100%;">Open Gate Scanner</a>
+    </div>
+
+    <!-- Card 7, 8, 9 -->
+    <div class="glass-panel glass-panel-hover" style="padding: 1.75rem;">
+      <div style="font-size: 2rem; margin-bottom: 1rem;">🔍</div>
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.6rem;">7, 8, 9. Records & Time Rules</h3>
+      <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.2rem;">
+        Search student in-out history, register new admins, and automatically enforce curfew and leave hours.
+      </p>
+      <a href="{{ url_for('portal_search_records') }}" class="btn btn-outline" style="width: 100%;">Search Records</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
