@@ -25,5 +25,8 @@ venv/
 ENV/
 *.db
 *.sqlite3
+*.yml
+*.yaml
+FRAS/ImagesUnknown/
 .DS_Store
 Thumbs.db

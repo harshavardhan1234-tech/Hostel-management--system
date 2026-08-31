@@ -1,97 +1,91 @@
-import cv2
-import numpy as np 
 import os
-from picamera.array import PiRGBArray
-from picamera import PiCamera
 import time
-import sys
-import logging as log
 import datetime as dt
-from time import sleep
+import logging as log
+import cv2
+import numpy as np
 
+# Ensure log and dataset paths
+log.basicConfig(filename='database.log', level=log.INFO)
+dataset_dir = 'Dataset'
+cascade_path = "haarcascade_frontalface_default.xml"
+if not os.path.exists(cascade_path):
+    cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
 
+faceCascade = cv2.CascadeClassifier(cascade_path)
+recognizer = cv2.face.LBPHFaceRecognizer_create()
 
-cx = 160
-cy = 120
+names = ['None', 'tasnim', 'Amir']
 
-# names related to ids: example
-names = ['None', 'tasnim','Amir'] 
+if not os.path.exists(dataset_dir) or len(os.listdir(dataset_dir)) == 0:
+    print("[!] No dataset found in 'Dataset/' directory. Please run Dataset.py first to enroll faces.")
+    exit(1)
 
+images = []
+labels = []
+for filename in os.listdir(dataset_dir):
+    if filename.endswith(('.jpg', '.png', '.jpeg')):
+        file_path = os.path.join(dataset_dir, filename)
+        im = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+        if im is not None:
+            images.append(im)
+            try:
+                label_id = int(filename.split('_')[0]) if filename.split('_')[0].isdigit() else 1
+            except Exception:
+                label_id = 1
+            labels.append(label_id)
 
-#iniciate id counter
-id = 0
+if len(images) > 0:
+    recognizer.train(images, np.array(labels))
+    print("[+] Model training completed.")
+else:
+    print("[!] No valid face images found for training.")
+    exit(1)
 
-
-
-
-
-xdeg = 150
-ydeg = 150
-
-
-  # calling the harr cascade file
-cascadePath = "haarcascade_frontalface_default.xml"
-faceCascade = cv2.CascadeClassifier(cascadePath)
-recognizer=cv2.face.LBPHFaceRecognizer_create()
-log.basicConfig(filename='database.log',level=log.INFO)
-# opening the database file using append mode
-file = open("/home/pi/Testnew/data_log.csv", "a")
-
-
-
-
-	
-
-
-images=[]
-labels=[]
-for filename in os.listdir('Dataset'):
-	im=cv2.imread('Dataset/'+filename,0)
-	images.append(im)
-	labels.append(int(filename.split('.')[0][0]))
-	
-
-
-
-recognizer.train(images,np.array(labels))
-print 'Training Done . . . '
-
+log_csv_path = "data_log.csv"
+file = open(log_csv_path, "a")
 font = cv2.FONT_HERSHEY_SIMPLEX
-cap=cv2.VideoCapture(0)
-lastRes=''
-count=0
+cap = cv2.VideoCapture(0)
 
-print ' Done 2 . . . '
-log.info("Date Time , Student Name \n")
-file.write("-------------------------------------------------  \n")
-file.write("        Date:"+str(dt.datetime.now().strftime("%d-%m-%Y"))+"        \n")
-file.write("-------------------------------------------------  \n")
-file.write("Time , Student Name \n")
-while(1):
-	ret, frame=cap.read()
-	gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-	faces = faceCascade.detectMultiScale(gray)
-	count+=1
+print("[+] Camera started. Press ESC or 'q' to exit.")
+log.info("Date Time , Student Name\n")
+file.write("-------------------------------------------------\n")
+file.write(f"        Date: {dt.datetime.now().strftime('%d-%m-%Y')}        \n")
+file.write("-------------------------------------------------\n")
+file.write("Time , Student Name\n")
+file.flush()
 
-	for (x,y,w,h) in faces:
-		cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),2)
-                id,confidence=recognizer.predict(gray[y:y+h, x:x+w])
+while True:
+    ret, frame = cap.read()
+    if not ret or frame is None:
+        break
 
-                # Check if confidence is less them 100 ==> "0" is perfect match 
-                if (confidence < 40):
-                    id = names[id]
-                    confidence = "  {0}%".format(round(100 - confidence))
-                    log.info(str(dt.datetime.now()) + ","+ str(id)+"\n")
-                    file.write(str(dt.datetime.now().strftime("%H:%M:%S")) + ","+ str(id)+"\n")
-                else:
-                    id = "unknown"
-                    confidence = "  {0}%".format(round(100 - confidence))
-                cv2.putText(frame, str(id), (x+5,y-5), font, 1, (255,255,255), 2)
-                cv2.putText(frame, str(confidence), (x+5,y+h-5), font, 1, (255,255,0), 1)
-                #cv2.putText( frame, str(lastRes), ( x, y ), cv2.FONT_HERSHEY_SIMPLEX, 0.5, ( 0, 0, 255 ), 2 )
-	cv2.imshow('frame',frame)
-	k = 0xFF & cv2.waitKey(10)
-	if k == 27:
-		break
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = faceCascade.detectMultiScale(gray, 1.2, 5)
+
+    for (x, y, w, h) in faces:
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        label_pred, confidence = recognizer.predict(gray[y:y+h, x:x+w])
+
+        # Confidence < 50 indicates good match with LBPH
+        if confidence < 50:
+            student_name = names[label_pred] if label_pred < len(names) else f"ID_{label_pred}"
+            conf_str = f"  {round(100 - confidence)}%"
+            log.info(f"{dt.datetime.now()},{student_name}\n")
+            file.write(f"{dt.datetime.now().strftime('%H:%M:%S')},{student_name}\n")
+            file.flush()
+        else:
+            student_name = "Unknown"
+            conf_str = f"  {round(100 - confidence)}%"
+
+        cv2.putText(frame, str(student_name), (x + 5, y - 5), font, 1, (255, 255, 255), 2)
+        cv2.putText(frame, str(conf_str), (x + 5, y + h - 5), font, 1, (255, 255, 0), 1)
+
+    cv2.imshow('Face Recognition', frame)
+    k = cv2.waitKey(10) & 0xFF
+    if k == 27 or k == ord('q'):
+        break
+
+file.close()
 cap.release()
 cv2.destroyAllWindows()
